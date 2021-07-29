@@ -1,3 +1,4 @@
+import 'package:festzap_test/const/app_images.dart';
 import 'package:festzap_test/controllers/controller_chat.dart';
 import 'package:festzap_test/controllers/controller_page_home.dart';
 import 'package:festzap_test/main.dart';
@@ -8,12 +9,18 @@ import 'package:festzap_test/widgets/app_bar.dart';
 import 'package:festzap_test/widgets/loading.dart';
 import 'package:flutter/material.dart';
 
-class PageHome extends StatelessWidget {
+class PageHome extends StatefulWidget {
+  @override
+  _PageHomeState createState() => _PageHomeState();
+}
+
+class _PageHomeState extends State<PageHome> {
   final controller = ControllerPageHome.instance;
-  final image =
-      "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
-  PageHome() {
+
+  @override
+  void initState() {
     controller.getCalls();
+    super.initState();
   }
 
   @override
@@ -22,9 +29,7 @@ class PageHome extends StatelessWidget {
       appBar: CustomAppBar(label: 'FestZap'),
       body: AnimatedBuilder(
         animation: controller,
-        builder: (BuildContext? _, Widget? __) {
-          return _body();
-        },
+        builder: (context, widget) => _body(),
       ),
     );
   }
@@ -45,20 +50,23 @@ class PageHome extends StatelessWidget {
         }
 
         return ListTile(
-            title: Text("${call.client?.name}"),
-            subtitle: Text("${call.lastMessage?.message ?? ''}"),
-            trailing: Text(
-              "$date",
-              textAlign: TextAlign.end,
-            ),
-            leading: CircleAvatar(backgroundImage: NetworkImage(this.image)),
-            onTap: () async {
-              await navigator.pushNamed(
-                NameRoutes.chat,
-                arguments: [call.uuid, call.client!.name],
-              );
-              ControllerChat.instance.channel.sink.close();
-            });
+          title: Text("${call.client?.name}"),
+          subtitle: Text("${call.lastMessage?.message ?? ''}"),
+          trailing: Text(
+            "$date",
+            textAlign: TextAlign.end,
+          ),
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(AppImageNet.profile),
+          ),
+          onTap: () async {
+            await navigator.pushNamed(
+              NameRoutes.chat,
+              arguments: [call.uuid, call.client!.name],
+            );
+            ControllerChat.instance.channel.sink.close();
+          },
+        );
       },
     );
   }

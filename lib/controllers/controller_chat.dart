@@ -20,15 +20,19 @@ class ControllerChat extends ChangeNotifier {
   List<LastMessage> messages = [];
   bool recording = false;
 
-  void update() => notifyListeners();
+  void update() {
+    notifyListeners();
+  }
 
   final scrollController = new ScrollController();
-  Future<void> lastMessage(
-      {int milliseconds = 10, double mult = 10, double sum = 0}) async {
+  Future<void> lastMessage({
+    int milliseconds = 10,
+    double mult = 10,
+    double sum = 0,
+  }) async {
     await Future.delayed(Duration(milliseconds: milliseconds));
-    scrollController.jumpTo(
-      scrollController.position.maxScrollExtent * mult + sum,
-    );
+    final position = scrollController.position.maxScrollExtent * mult + sum;
+    scrollController.jumpTo(position);
   }
 
   Future<void> getHistoric(String uuid, {bool loading = true}) async {

@@ -16,10 +16,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:just_audio/just_audio.dart' as ap;
 
-// ignore: must_be_immutable
-class PageChat extends StatelessWidget {
+class PageChat extends StatefulWidget {
+  @override
+  _PageChatState createState() => _PageChatState();
+}
+
+class _PageChatState extends State<PageChat> {
   String _uuid = "";
   String _name = "";
   String path = "";
@@ -27,14 +30,16 @@ class PageChat extends StatelessWidget {
   final recorder = RecordPlatform.instance;
   final editMessage = TextEditingController();
   final audio = AudioPlayer();
-  ap.AudioSource? audioSource;
+  bool asBilded = false;
 
-  PageChat() {
+  @override
+  void initState() {
     controller.channel = ControllerChat().channel;
     controller.channel.stream.listen((event) {
       Map json = jsonDecode(event);
       controller.addMessage(json);
     });
+    super.initState();
   }
 
   @override
@@ -42,8 +47,10 @@ class PageChat extends StatelessWidget {
     final args = ModalRoute.of(context)!.settings.arguments as List;
     _name = args[1] as String;
     _uuid = args[0] as String;
-
-    controller.getHistoric(_uuid);
+    if (!asBilded) {
+      asBilded = true;
+      controller.getHistoric(_uuid);
+    }
 
     return AnimatedBuilder(
       animation: controller,
@@ -59,182 +66,40 @@ class PageChat extends StatelessWidget {
 
   Widget _body() {
     if (controller.state == modelState.loading) return CustomLoading();
-    return Scrollbar(
-      child: ListView.builder(
-        controller: controller.scrollController,
-        physics: BouncingScrollPhysics(),
-        itemCount: controller.messages.length,
-        padding: EdgeInsets.only(bottom: 80),
-        itemBuilder: (context, index) {
-          final message = controller.messages[index];
-          double right = message.type! == 'sent' ? 10 : 60;
-          double left = message.type! == 'sent' ? 60 : 10;
+    return ListView.builder(
+      controller: controller.scrollController,
+      physics: const BouncingScrollPhysics(),
+      itemCount: controller.messages.length,
+      padding: const EdgeInsets.only(bottom: 80),
+      itemBuilder: (context, index) {
+        final message = controller.messages[index];
+        double right = message.type! == 'sent' ? 10 : 60;
+        double left = message.type! == 'sent' ? 60 : 10;
 
-          return Container(
-            margin: EdgeInsets.only(left: left, right: right, top: 5),
-            decoration: _decoration(message.type!),
-            child: ListTile(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  viewMessage(message),
-                  viewPdf(message),
-                  viewPhoto(message),
-                  viewVideo(message),
-                  viewAudio(message),
-                ],
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  "${Formatter.date(message.createdAt!)}",
-                  textAlign: TextAlign.end,
-                ),
-              ),
+        return Container(
+          margin: EdgeInsets.only(left: left, right: right, top: 5),
+          decoration: _decoration(message.type!),
+          child: ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                viewMessage(message),
+                viewPdf(message),
+                viewPhoto(message),
+                viewVideo(message),
+                viewAudio(message),
+              ],
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget viewMessage(LastMessage message) {
-    return Visibility(
-      visible: message.message != null,
-      child: Text(
-        "${message.message}",
-        style: TextStyle(color: AppColors.black),
-      ),
-    );
-  }
-
-  Widget viewPhoto(LastMessage message) {
-    return Visibility(
-      child: GestureDetector(
-        child: Container(
-          padding: EdgeInsets.only(top: 10),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network("${message.file}"),
-          ),
-        ),
-        onTap: () {
-          navigator.push(
-            MaterialPageRoute(
-              builder: (BuildContext context) =>
-                  PageViewImageOff(message.file!),
-            ),
-          );
-        },
-      ),
-      visible: message.file != null &&
-          message.file!.substring(message.file!.length - 3) != "pdf" &&
-          message.file!.substring(message.file!.length - 3) != "m4a" &&
-          message.file!.substring(message.file!.length - 3) != "mp4",
-    );
-  }
-
-  Widget viewAudio(LastMessage message) {
-    return Visibility(
-        child: GestureDetector(
-          onTap: () async {
-            path = "";
-            controller.update();
-            await audio.stop();
-
-            path = '${message.uuid}';
-            print(message.file!);
-
-            await audio
-                .setAudioSource(AudioSource.uri(Uri.parse(message.file!)));
-            controller.update();
-
-            await audio.play();
-            controller.update();
-          },
-          child: Container(
-            padding: EdgeInsets.only(top: 10),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Row(
-                children: [
-                  Visibility(
-                    child: GestureDetector(
-                      child: Icon(Icons.pause),
-                      onTap: () async {
-                        await audio.stop();
-                        controller.update();
-                      },
-                    ),
-                    visible: audio.playerState.playing && message.uuid == path,
-                    replacement: Icon(Icons.play_arrow),
-                  ),
-                  Expanded(
-                    child: Container(
-                      child: Divider(
-                        thickness: 5,
-                      ),
-                    ),
-                  ),
-                ],
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                "${Formatter.date(message.createdAt!)}",
+                textAlign: TextAlign.end,
               ),
             ),
           ),
-        ),
-        visible: message.file != null &&
-            message.file!.substring(message.file!.length - 3) == "m4a");
-  }
-
-  Widget viewPdf(LastMessage message) {
-    return Visibility(
-      child: GestureDetector(
-        child: Container(
-          padding: EdgeInsets.only(top: 10),
-          child: Row(
-            children: [
-              Icon(Icons.picture_as_pdf),
-              Container(width: 20),
-              Expanded(
-                child: Text(
-                  "${message.file?.replaceAll('https://test-chat.blubots.com/media/uploads/', '')}",
-                  style: TextStyle(decoration: TextDecoration.underline),
-                ),
-              ),
-            ],
-          ),
-        ),
-        onTap: () {
-          launch(message.file!);
-        },
-      ),
-      visible: message.file != null &&
-          message.file!.substring(message.file!.length - 3) == "pdf",
-    );
-  }
-
-  Widget viewVideo(LastMessage message) {
-    return Visibility(
-      child: GestureDetector(
-        child: Container(
-          padding: EdgeInsets.only(top: 10),
-          child: Row(
-            children: [
-              Icon(Icons.video_collection_outlined),
-              Container(width: 20),
-              Expanded(
-                child: Text(
-                  "${message.file?.replaceAll('https://test-chat.blubots.com/media/uploads/', '')}",
-                  style: TextStyle(decoration: TextDecoration.underline),
-                ),
-              ),
-            ],
-          ),
-        ),
-        onTap: () => navigator.pushNamed(NameRoutes.previewVideoOff,
-            arguments: message.file),
-      ),
-      visible: message.file != null &&
-          message.file!.substring(message.file!.length - 3) == "mp4",
+        );
+      },
     );
   }
 
@@ -261,12 +126,13 @@ class PageChat extends StatelessWidget {
         ),
         IconButton(
           icon: Visibility(
-            child: Icon(Icons.send),
+            child: const Icon(Icons.send),
             visible: editMessage.text.isNotEmpty,
             replacement: Visibility(
-              child: Icon(Icons.mic),
+              child: const Icon(Icons.mic),
               visible: !controller.recording,
-              replacement: Icon(Icons.audiotrack_sharp, color: Colors.red),
+              replacement:
+                  const Icon(Icons.audiotrack_sharp, color: Colors.red),
             ),
           ),
           onPressed: () async {
@@ -308,39 +174,39 @@ class PageChat extends StatelessWidget {
             Column(
               children: [
                 IconButton(
-                  icon: Icon(Icons.add_a_photo_outlined),
+                  icon: const Icon(Icons.add_a_photo_outlined),
                   onPressed: () => controller.openGallery(_uuid),
                 ),
-                Text("Camera"),
+                const Text("Camera"),
               ],
             ),
             Column(
               children: [
                 IconButton(
-                  icon: Icon(Icons.filter),
+                  icon: const Icon(Icons.filter),
                   onPressed: () => controller.openGallery(_uuid,
                       source: ImageSource.gallery),
                 ),
-                Text("Imagem"),
+                const Text("Imagem"),
               ],
             ),
             Column(
               children: [
                 IconButton(
-                  icon: Icon(Icons.video_call_outlined),
+                  icon: const Icon(Icons.video_call_outlined),
                   onPressed: () =>
                       controller.openVideo(_uuid, source: ImageSource.gallery),
                 ),
-                Text("Video"),
+                const Text("Video"),
               ],
             ),
             Column(
               children: [
                 IconButton(
-                  icon: Icon(Icons.description_outlined),
+                  icon: const Icon(Icons.description_outlined),
                   onPressed: () => controller.openFile(_uuid),
                 ),
-                Text("Arquivos"),
+                const Text("Arquivos"),
               ],
             ),
           ],
@@ -355,6 +221,157 @@ class PageChat extends StatelessWidget {
     return BoxDecoration(
       color: color,
       borderRadius: BorderRadius.circular(10),
+    );
+  }
+
+  Widget viewMessage(LastMessage message) {
+    return Visibility(
+      visible: message.message != null,
+      child: Text(
+        "${message.message}",
+        style: TextStyle(color: AppColors.black),
+      ),
+    );
+  }
+
+  Widget viewPhoto(LastMessage message) {
+    return Visibility(
+      child: GestureDetector(
+        child: Container(
+          height: 200,
+          padding: const EdgeInsets.only(top: 10),
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                "${message.file}",
+                height: 200,
+                width: MediaQuery.of(navigator.context).size.width - 70,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },
+              ),
+            ),
+          ),
+        ),
+        onTap: () {
+          navigator.push(
+            MaterialPageRoute(
+              builder: (BuildContext context) =>
+                  PageViewImageOff(message.file!),
+            ),
+          );
+        },
+      ),
+      visible: message.file != null &&
+          message.file!.substring(message.file!.length - 3) != "pdf" &&
+          message.file!.substring(message.file!.length - 3) != "m4a" &&
+          message.file!.substring(message.file!.length - 3) != "mp4",
+    );
+  }
+
+  Widget viewAudio(LastMessage message) {
+    return Visibility(
+        child: GestureDetector(
+          onTap: () async {
+            await audio.stop().then((value) => controller.update());
+            final uri = AudioSource.uri(Uri.parse(message.file!));
+
+            await audio.setAudioSource(uri).then((value) {
+              path = '${message.uuid}';
+              controller.update();
+            });
+
+            await audio.play().then((value) {
+              path = "";
+              controller.update();
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.only(top: 10),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Row(
+                children: [
+                  Visibility(
+                    child: GestureDetector(
+                      child: const Icon(Icons.pause),
+                      onTap: () async {
+                        await audio.stop();
+                        controller.update();
+                      },
+                    ),
+                    visible: audio.playerState.playing && message.uuid == path,
+                    replacement: Icon(Icons.play_arrow),
+                  ),
+                  Expanded(
+                    child: Container(
+                      child: const Divider(
+                        thickness: 5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        visible: message.file != null &&
+            message.file!.substring(message.file!.length - 3) == "m4a");
+  }
+
+  Widget viewPdf(LastMessage message) {
+    return Visibility(
+      child: GestureDetector(
+        child: Container(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.picture_as_pdf),
+              Container(width: 20),
+              Expanded(
+                child: Text(
+                  "${message.file?.replaceAll('https://test-chat.blubots.com/media/uploads/', '')}",
+                  style: TextStyle(decoration: TextDecoration.underline),
+                ),
+              ),
+            ],
+          ),
+        ),
+        onTap: () {
+          launch(message.file!);
+        },
+      ),
+      visible: message.file != null &&
+          message.file!.substring(message.file!.length - 3) == "pdf",
+    );
+  }
+
+  Widget viewVideo(LastMessage message) {
+    return Visibility(
+      child: GestureDetector(
+        child: Container(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.video_collection_outlined),
+              Container(width: 20),
+              Expanded(
+                child: Text(
+                  "${message.file?.replaceAll('https://test-chat.blubots.com/media/uploads/', '')}",
+                  style: TextStyle(decoration: TextDecoration.underline),
+                ),
+              ),
+            ],
+          ),
+        ),
+        onTap: () => navigator.pushNamed(NameRoutes.previewVideoOff,
+            arguments: message.file),
+      ),
+      visible: message.file != null &&
+          message.file!.substring(message.file!.length - 3) == "mp4",
     );
   }
 }
