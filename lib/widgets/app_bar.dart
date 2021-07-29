@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String label;
-  CustomAppBar({required this.label}) : preferredSize = Size.fromHeight(60.0);
+  final List<Widget>? actions;
+  CustomAppBar({required this.label, this.actions})
+      : preferredSize = Size.fromHeight(60.0);
 
   @override
   final Size preferredSize;
@@ -12,6 +14,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(this.label),
       centerTitle: true,
+      actions: this.actions,
     );
   }
 }

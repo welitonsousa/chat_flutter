@@ -1,6 +1,7 @@
 import 'package:festzap_test/const/app_images.dart';
 import 'package:festzap_test/controllers/controller_chat.dart';
 import 'package:festzap_test/controllers/controller_page_home.dart';
+import 'package:festzap_test/controllers/controller_theme.dart';
 import 'package:festzap_test/main.dart';
 import 'package:festzap_test/models/state.dart';
 import 'package:festzap_test/routes.dart';
@@ -26,7 +27,22 @@ class _PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(label: 'FestZap'),
+      appBar: CustomAppBar(
+        label: 'FastZap',
+        actions: [
+          IconButton(
+            icon: Visibility(
+              child: Icon(Icons.brightness_2_outlined),
+              replacement: Icon(Icons.brightness_5),
+              visible: ControllerTheme.instance.isDarkTheme,
+            ),
+            onPressed: () {
+              final _controller = ControllerTheme.instance;
+              _controller.changeTheme(!_controller.isDarkTheme);
+            },
+          )
+        ],
+      ),
       body: AnimatedBuilder(
         animation: controller,
         builder: (context, widget) => _body(),

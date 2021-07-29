@@ -47,6 +47,7 @@ class CustomInput extends StatelessWidget {
             bottom: 15,
             top: 15,
           ),
+          hintStyle: TextStyle(color: Colors.black54),
           hintText: this.label,
         ),
       ),

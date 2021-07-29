@@ -53,6 +53,7 @@ class _PageChatState extends State<PageChat> {
     }
 
     return AnimatedBuilder(
+      key: Key(NameRoutes.chat),
       animation: controller,
       builder: (context, widget) {
         return Scaffold(
@@ -80,6 +81,7 @@ class _PageChatState extends State<PageChat> {
           margin: EdgeInsets.only(left: left, right: right, top: 5),
           decoration: _decoration(message.type!),
           child: ListTile(
+            key: Key('message'),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,6 +96,7 @@ class _PageChatState extends State<PageChat> {
               padding: const EdgeInsets.only(top: 5),
               child: Text(
                 "${Formatter.date(message.createdAt!)}",
+                style: TextStyle(color: Colors.black54),
                 textAlign: TextAlign.end,
               ),
             ),
@@ -226,6 +229,7 @@ class _PageChatState extends State<PageChat> {
 
   Widget viewMessage(LastMessage message) {
     return Visibility(
+      key: Key('viewMessage'),
       visible: message.message != null,
       child: Text(
         "${message.message}",
@@ -236,6 +240,7 @@ class _PageChatState extends State<PageChat> {
 
   Widget viewPhoto(LastMessage message) {
     return Visibility(
+      key: Key('viewPhoto'),
       child: GestureDetector(
         child: Container(
           height: 200,
@@ -274,6 +279,7 @@ class _PageChatState extends State<PageChat> {
 
   Widget viewAudio(LastMessage message) {
     return Visibility(
+        key: Key('viewAudio'),
         child: GestureDetector(
           onTap: () async {
             await audio.stop().then((value) => controller.update());
@@ -324,6 +330,7 @@ class _PageChatState extends State<PageChat> {
 
   Widget viewPdf(LastMessage message) {
     return Visibility(
+      key: Key('viewPdf'),
       child: GestureDetector(
         child: Container(
           padding: const EdgeInsets.only(top: 10),
@@ -351,6 +358,7 @@ class _PageChatState extends State<PageChat> {
 
   Widget viewVideo(LastMessage message) {
     return Visibility(
+      key: Key('viewVideo'),
       child: GestureDetector(
         child: Container(
           padding: const EdgeInsets.only(top: 10),
